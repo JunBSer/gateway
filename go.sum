@@ -1,9 +1,7 @@
 github.com/BurntSushi/toml v1.2.1 h1:9F2/+DoOYIOksmaJFPw1tGFy1eDnIJXg+UHjuD8lTak=
 github.com/BurntSushi/toml v1.2.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
-github.com/JunBSer/service-auth v0.0.0-20250521172636-adaba913f2f6 h1:z2BpgdW0cSrQ5l/pORmOtgYEpS4Mv0JiV4tJosYHGcs=
-github.com/JunBSer/service-auth v0.0.0-20250521172636-adaba913f2f6/go.mod h1:X+LfT1CWVaCqK8ycX887+I5RR7Akzucu1f3lK9xATfg=
-github.com/JunBSer/services_proto v1.1.1 h1:P5RwQN3Es4ZfUQ0Lmk/GaAp7zvjcStkET2G6joudGiU=
-github.com/JunBSer/services_proto v1.1.1/go.mod h1:Fe5iJ9Wl/CH/JCagXif5Wy9ObzqnWDmX6VIwj5RgLx4=
+github.com/JunBSer/services_proto v1.1.5 h1:RKsRSsBKhyOGaTcAmUUiwmA2kUJhLny2mi5vkBesHlw=
+github.com/JunBSer/services_proto v1.1.5/go.mod h1:Fe5iJ9Wl/CH/JCagXif5Wy9ObzqnWDmX6VIwj5RgLx4=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/go-logr/logr v1.4.2 h1:6pFjapn8bFcIbiKo3XT4j/BhANplGihG6tvd+8rYgrY=

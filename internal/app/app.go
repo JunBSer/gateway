@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/JunBSer/gateway/internal/config"
+	"github.com/JunBSer/gateway/internal/metadata"
+	"github.com/JunBSer/gateway/internal/transport/endpoints"
 	"github.com/JunBSer/gateway/internal/transport/grpc_gateway"
 	"github.com/JunBSer/gateway/pkg/logger"
 	"go.uber.org/zap"
@@ -16,20 +18,11 @@ import (
 func MustRun(cfg *config.Config) {
 	mainLogger := logger.New("Gateway", cfg.Logger.LogLvl)
 
-	endpoints := grpc_gateway.NewEndpointConfig()
+	cfgEnd := metadata.NewEndpointConfig()
 
-	endpoints.PublicPaths = map[string]struct{}{
-		"/v1/auth/login":     {},
-		"/v1/auth/register":  {},
-		"/v1/auth/refresh":   {},
-		"/docs/swagger.json": {},
-	}
+	endpoints.SetupEndpoints(cfgEnd)
 
-	endpoints.AdminPrefixes = []string{
-		"/v1/admin",
-	}
-
-	gw := grpc_gateway.NewGateway(&cfg.GW, mainLogger, endpoints)
+	gw := grpc_gateway.NewGateway(&cfg.GW, mainLogger, cfgEnd)
 
 	graceCh := make(chan os.Signal, 2)
 	signal.Notify(graceCh, syscall.SIGINT, syscall.SIGTERM)

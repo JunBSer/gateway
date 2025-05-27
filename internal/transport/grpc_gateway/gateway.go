@@ -5,8 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/JunBSer/gateway/internal/config"
+	"github.com/JunBSer/gateway/internal/metadata"
 	"github.com/JunBSer/gateway/pkg/logger"
-	pb "github.com/JunBSer/services_proto/gen/go"
+	pb "github.com/JunBSer/services_proto/auth/gen/go"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -20,20 +21,20 @@ const IsAdminKey ContextKey = "isa"
 const UsIDKey ContextKey = "uid"
 
 type GatewayServer struct {
-	config    *config.Gateway
-	logger    logger.Logger
-	server    *http.Server
-	endpoints *EndpointConfig
+	Config    *config.Gateway
+	Logger    logger.Logger
+	Server    *http.Server
+	Endpoints *metadata.EndpointConfig
 }
 
-func NewGateway(cfg *config.Gateway, logger logger.Logger, endpoints *EndpointConfig) *GatewayServer {
+func NewGateway(cfg *config.Gateway, logger logger.Logger, endpoints *metadata.EndpointConfig) *GatewayServer {
 	if endpoints == nil {
-		endpoints = NewEndpointConfig()
+		endpoints = metadata.NewEndpointConfig()
 	}
 	return &GatewayServer{
-		config:    cfg,
-		logger:    logger,
-		endpoints: endpoints,
+		Config:    cfg,
+		Logger:    logger,
+		Endpoints: endpoints,
 	}
 }
 
@@ -43,7 +44,7 @@ func (s *GatewayServer) Start() error {
 
 	rootMux := http.NewServeMux()
 
-	if s.endpoints.SwaggerEnabled {
+	if s.Endpoints.IsSwaggerEnabled() {
 		s.registerSwagger(rootMux)
 	}
 
@@ -60,23 +61,22 @@ func (s *GatewayServer) Start() error {
 		gwMux,
 		s.loggingMiddleware(),
 		s.corsMiddleware(),
-		s.authMiddleware(),
-		s.adminCheckMiddleware(),
+		s.authMiddleware(s.Endpoints),
 	)
 
 	rootMux.Handle("/", handler)
 
-	s.server = &http.Server{
-		Addr:    s.config.Host + ":" + s.config.Port,
+	s.Server = &http.Server{
+		Addr:    s.Config.Host + ":" + s.Config.Port,
 		Handler: rootMux,
 	}
 
 	go func() {
-		s.logger.Info(ctx, "Starting gateway server",
-			zap.String("addr", s.server.Addr))
+		s.Logger.Info(ctx, "Starting gateway server",
+			zap.String("addr", s.Server.Addr))
 
-		if err := s.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			s.logger.Error(ctx, "Server failed",
+		if err := s.Server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			s.Logger.Error(ctx, "Server failed",
 				zap.Error(err),
 				zap.String("caller", op))
 
@@ -87,7 +87,7 @@ func (s *GatewayServer) Start() error {
 }
 
 func (s *GatewayServer) respondError(w http.ResponseWriter, r *http.Request, msg string, code int) {
-	s.logger.Error(r.Context(), "Request error",
+	s.Logger.Error(r.Context(), "Request error",
 		zap.String("path", r.URL.Path),
 		zap.Int("code", code),
 	)
@@ -96,49 +96,31 @@ func (s *GatewayServer) respondError(w http.ResponseWriter, r *http.Request, msg
 
 func (s *GatewayServer) validateToken(ctx context.Context, token string) (context.Context, bool) {
 	conn, err := grpc.NewClient(
-		fmt.Sprintf("%s:%s", s.config.AuthHost, s.config.AuthPort),
+		fmt.Sprintf("%s:%s", s.Config.AuthHost, s.Config.AuthPort),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
-
 	if err != nil {
-		s.logger.Error(ctx, "Connection failed", zap.Error(err))
+		s.Logger.Error(ctx, "Cannot connect to auth service", zap.Error(err))
 		return ctx, false
 	}
 	defer conn.Close()
 
 	client := pb.NewAuthClient(conn)
-
-	ctx = context.Background()
-
 	resp, err := client.ValidateToken(ctx, &pb.ValidateTokenRequest{Token: token})
-	if err != nil || resp == nil {
-		s.logger.Error(ctx, "Validation failed",
-			zap.Error(err),
-			zap.Bool("nil_response", resp == nil))
+	if err != nil || resp == nil || !resp.IsValid {
+		s.Logger.Error(ctx, "Token validation failed", zap.Error(err))
 		return ctx, false
 	}
 
-	if !resp.GetIsValid() || resp.GetUserId().String() == "" {
-		s.logger.Error(ctx, "Invalid token data",
-			zap.Bool("is_valid", resp.GetIsValid()),
-			zap.String("user_id", resp.GetUserId().String()))
-		return ctx, false
-	}
-
-	return context.WithValue(
-		context.WithValue(ctx, UsIDKey, resp.GetUserId()),
-		IsAdminKey, resp.GetIsAdmin(),
-	), true
-}
-func (s *GatewayServer) isAdmin(ctx context.Context) bool {
-	isAdmin, ok := ctx.Value(IsAdminKey).(bool)
-	return ok && isAdmin
+	ctx = context.WithValue(ctx, UsIDKey, resp.UserId)
+	ctx = context.WithValue(ctx, IsAdminKey, resp.IsAdmin)
+	return ctx, true
 }
 
 func (s *GatewayServer) errorHandler(ctx context.Context, mux *runtime.ServeMux,
 	marshaller runtime.Marshaler, w http.ResponseWriter, r *http.Request, err error) {
 
-	s.logger.Error(ctx, "Gateway error",
+	s.Logger.Error(ctx, "Gateway error",
 		zap.Error(err),
 		zap.String("path", r.URL.Path),
 	)
@@ -148,7 +130,7 @@ func (s *GatewayServer) errorHandler(ctx context.Context, mux *runtime.ServeMux,
 func (s *GatewayServer) routingErrorHandler(ctx context.Context, mux *runtime.ServeMux,
 	marshaller runtime.Marshaler, w http.ResponseWriter, r *http.Request, code int) {
 
-	s.logger.Error(ctx, "Routing error",
+	s.Logger.Error(ctx, "Routing error",
 		zap.Int("code", code),
 		zap.String("path", r.URL.Path),
 	)
@@ -156,6 +138,6 @@ func (s *GatewayServer) routingErrorHandler(ctx context.Context, mux *runtime.Se
 }
 
 func (s *GatewayServer) Stop(ctx context.Context) error {
-	s.logger.Info(ctx, "Shutting down gateway server")
-	return s.server.Shutdown(ctx)
+	s.Logger.Info(ctx, "Shutting down gateway server")
+	return s.Server.Shutdown(ctx)
 }

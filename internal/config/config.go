@@ -24,6 +24,9 @@ type (
 
 		AuthHost string `env:"AUTH_HOST" envDefault:"localhost"`
 		AuthPort string `env:"AUTH_PORT" envDefault:"50051"`
+
+		HotelHost string `env:"HOTEL_HOST" envDefault:"localhost"`
+		HotelPort string `env:"HOTEL_PORT" envDefault:"50052"`
 	}
 
 	Log struct {
