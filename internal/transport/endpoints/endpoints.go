@@ -28,11 +28,15 @@ func SetupEndpoints(cfgEnd *metadata.EndpointConfig) {
 	cfgEnd.AddEndpoint("PUT", "/v1/admin/users/{user_id}", "Auth.UpdateUser", metadata.AuthAdmin)
 	cfgEnd.AddEndpoint("DELETE", "/v1/admin/users/{user_id}", "Auth.DeleteUser", metadata.AuthAdmin)
 
-	// Admin hotel management endpoints (пример, можешь заменить на свои grpc методы)
 	cfgEnd.AddEndpoint("POST", "/v1/hotels", "Hotels.CreateHotel", metadata.AuthAdmin)
 	cfgEnd.AddEndpoint("PUT", "/v1/hotels/{id}", "Hotels.UpdateHotel", metadata.AuthAdmin)
 	cfgEnd.AddEndpoint("DELETE", "/v1/hotels/{id}", "Hotels.DeleteHotel", metadata.AuthAdmin)
 	cfgEnd.AddEndpoint("POST", "/v1/hotels/{hotel_id}/rooms", "Rooms.CreateRoom", metadata.AuthAdmin)
 	cfgEnd.AddEndpoint("PUT", "/v1/hotels/{hotel_id}/rooms/{id}", "Rooms.UpdateRoom", metadata.AuthAdmin)
 	cfgEnd.AddEndpoint("DELETE", "/v1/hotels/{hotel_id}/rooms/{id}", "Rooms.DeleteRoom", metadata.AuthAdmin)
+
+	cfgEnd.AddEndpoint("POST", "/v1/bookings", "BookingService.CreateBooking", metadata.AuthUser)
+	cfgEnd.AddEndpoint("POST", "/v1/getbooking", "BookingService.GetBooking", metadata.AuthUser)
+	cfgEnd.AddEndpoint("DELETE", "/v1/cancel/{booking_id}", "BookingService.CancelBooking", metadata.AuthUser)
+	cfgEnd.AddEndpoint("GET", "/v1/admin/bookings", "BookingService.ListBookings", metadata.AuthAdmin)
 }

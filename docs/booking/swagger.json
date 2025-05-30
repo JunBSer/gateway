@@ -1,0 +1,368 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Booking Service API",
+    "description": "API for managing hotel room bookings",
+    "version": "1.0"
+  },
+  "tags": [
+    {
+      "name": "BookingService"
+    }
+  ],
+  "schemes": [
+    "http"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/admin/bookings": {
+      "get": {
+        "summary": "List all bookings (Admin only)",
+        "description": "Returns paginated list of all bookings. Requires admin privileges",
+        "operationId": "BookingService_ListBookings",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bookingListBookingsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "pageSize",
+            "description": "Number of results per page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "default": "10"
+          },
+          {
+            "name": "page",
+            "description": "Pagination value",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "admin"
+        ],
+        "security": [
+          {
+            "bearer": [
+              "admin"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/bookings": {
+      "post": {
+        "summary": "Create new booking",
+        "description": "Creates a new booking for specified room and dates",
+        "operationId": "BookingService_CreateBooking",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bookingBookingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bookingCreateBookingRequest"
+            }
+          }
+        ],
+        "tags": [
+          "bookings"
+        ]
+      }
+    },
+    "/v1/cancel/{bookingId}": {
+      "delete": {
+        "summary": "Cancel booking",
+        "description": "Cancels existing booking and releases resources",
+        "operationId": "BookingService_CancelBooking",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bookingCancelBookingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "bookingId",
+            "description": "Unique booking identifier to cancel",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/BookingServiceCancelBookingBody"
+            }
+          }
+        ],
+        "tags": [
+          "bookings"
+        ]
+      }
+    },
+    "/v1/getbooking": {
+      "post": {
+        "summary": "Get booking details",
+        "description": "Returns full details of specified booking",
+        "operationId": "BookingService_GetBooking",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bookingBookingDetails"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/bookingGetBookingRequest"
+            }
+          }
+        ],
+        "tags": [
+          "bookings"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "BookingServiceCancelBookingBody": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Unique identifier for the user"
+        }
+      }
+    },
+    "bookingBookingDetails": {
+      "type": "object",
+      "properties": {
+        "bookingId": {
+          "type": "string"
+        },
+        "roomId": {
+          "type": "string"
+        },
+        "hotelId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/bookingStatus"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "bookingBookingResponse": {
+      "type": "object",
+      "properties": {
+        "bookingId": {
+          "type": "string",
+          "description": "Unique booking identifier"
+        },
+        "status": {
+          "$ref": "#/definitions/bookingStatus"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Booking creation timestamp"
+        }
+      }
+    },
+    "bookingCancelBookingResponse": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Unique identifier for the user"
+        },
+        "success": {
+          "type": "boolean",
+          "description": "Cancellation operation result"
+        },
+        "cancelledAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Cancellation timestamp"
+        }
+      }
+    },
+    "bookingCreateBookingRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Unique identifier for the user"
+        },
+        "hotelId": {
+          "type": "string",
+          "description": "Unique identifier for the room"
+        },
+        "roomId": {
+          "type": "string",
+          "description": "Unique identifier for the room"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Booking start date and time in UTC"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Booking end date and time in UTC"
+        }
+      }
+    },
+    "bookingGetBookingRequest": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Unique identifier for the user"
+        },
+        "bookingId": {
+          "type": "string",
+          "description": "Unique booking identifier"
+        }
+      }
+    },
+    "bookingListBookingsResponse": {
+      "type": "object",
+      "properties": {
+        "bookings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bookingBookingDetails"
+          }
+        }
+      }
+    },
+    "bookingStatus": {
+      "type": "string",
+      "enum": [
+        "STATUS_UNKNOWN",
+        "CONFIRMED",
+        "CANCELLED",
+        "FAILED",
+        "MODIFIED"
+      ],
+      "default": "STATUS_UNKNOWN"
+    },
+    "googlerpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    }
+  },
+  "securityDefinitions": {
+    "bearer": {
+      "type": "apiKey",
+      "description": "Authentication token, prefixed by Bearer: Bearer \u003ctoken\u003e",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "bearer": []
+    }
+  ]
+}

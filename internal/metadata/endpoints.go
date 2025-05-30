@@ -15,8 +15,8 @@ const (
 
 type Endpoint struct {
 	HTTPMethod  string
-	PathPattern string         // Исходный шаблон (например, "/v1/hotels/{id}")
-	Regex       *regexp.Regexp // Скомпилированное регулярное выражение
+	PathPattern string
+	Regex       *regexp.Regexp
 	GRPCMethod  string
 	Level       AuthLevel
 }
@@ -34,7 +34,7 @@ func NewEndpointConfig() *EndpointConfig {
 }
 
 func (c *EndpointConfig) AddEndpoint(method, pathPattern, grpcMethod string, level AuthLevel) {
-	// Replace { with named group pattern and } with the regex part
+
 	regexPattern := "^" + strings.ReplaceAll(pathPattern, "{", "(?P<") + "$"
 	regexPattern = strings.ReplaceAll(regexPattern, "}", ">[^/]+)")
 

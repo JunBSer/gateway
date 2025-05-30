@@ -27,6 +27,9 @@ type (
 
 		HotelHost string `env:"HOTEL_HOST" envDefault:"localhost"`
 		HotelPort string `env:"HOTEL_PORT" envDefault:"50052"`
+
+		BookingHost string `env:"BOOKING_HOST" envDefault:"localhost"`
+		BookingPort string `env:"BOOKING_PORT" envDefault:"50053"`
 	}
 
 	Log struct {
@@ -37,17 +40,17 @@ type (
 func MustLoad() *Config {
 	configPath := fetchConfigPath()
 	if configPath == "" {
-		panic("config file path is empty")
+		panic("configs file path is empty")
 	}
 
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		panic("config file does not exist: " + configPath)
+		panic("configs file does not exist: " + configPath)
 	}
 
 	var cfg Config
 
 	if err := cleanenv.ReadConfig(configPath, &cfg); err != nil {
-		panic("config path is empty: " + err.Error())
+		panic("configs path is empty: " + err.Error())
 	}
 
 	return &cfg
@@ -56,7 +59,7 @@ func MustLoad() *Config {
 func fetchConfigPath() string {
 	var res string
 
-	flag.StringVar(&res, "config", "", "path to config file")
+	flag.StringVar(&res, "config", "", "path to configs file")
 	flag.Parse()
 
 	if res == "" {

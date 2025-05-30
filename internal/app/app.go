@@ -43,5 +43,5 @@ func MustRun(cfg *config.Config) {
 	mainLogger.Info(context.Background(), "Shutting down...", zap.String("signal", sig.String()))
 
 	gw.Stop(context.Background())
-
+	mainLogger.Info(context.Background(), "Gateway stopped", zap.String("signal", sig.String()))
 }

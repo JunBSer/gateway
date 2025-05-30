@@ -14,9 +14,3 @@ func (s *GatewayServer) registerSwagger(mux *http.ServeMux) {
 	s.Endpoints.AddEndpoint("GET", "/docs", "Docs.Index", metadata.AuthNone)
 	s.Endpoints.AddEndpoint("GET", "/docs/swagger.json", "Docs.Swagger", metadata.AuthNone)
 }
-
-//http.Handle("/docs/auth/swagger.json",
-//serveSwagger(filepath.Join("docs", "auth", "swagger.json")))
-//
-//http.Handle("/docs/booking/swagger.json",
-//serveSwagger(filepath.Join("docs", "booking", "swagger.json")))

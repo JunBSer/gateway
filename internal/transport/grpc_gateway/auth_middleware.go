@@ -1,6 +1,7 @@
 package grpc_gateway
 
 import (
+	"encoding/json"
 	"github.com/JunBSer/gateway/internal/metadata"
 	"github.com/JunBSer/gateway/pkg/logger"
 	"net/http"
@@ -10,6 +11,27 @@ import (
 type AuthMiddleware struct {
 	authServiceAddr string
 	logger          logger.Logger
+}
+
+func IsUserMatchesTheID(r *http.Request, userID string) bool {
+	body := map[string]interface{}{}
+
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		return false
+	}
+
+	id, ok := body["user_id"]
+	if !ok {
+		return true
+	}
+
+	strID, ok := id.(string)
+	if !ok {
+		return false
+	}
+
+	return strID == userID
 }
 
 func (s *GatewayServer) authMiddleware(cfg *metadata.EndpointConfig) func(http.Handler) http.Handler {
@@ -25,7 +47,6 @@ func (s *GatewayServer) authMiddleware(cfg *metadata.EndpointConfig) func(http.H
 
 			switch ep.Level {
 			case metadata.AuthNone:
-
 				next.ServeHTTP(w, r)
 				return
 
@@ -47,6 +68,15 @@ func (s *GatewayServer) authMiddleware(cfg *metadata.EndpointConfig) func(http.H
 					if isAdmin, _ := ctx2.Value(IsAdminKey).(bool); !isAdmin {
 						s.respondError(w, r, "Admin access required", http.StatusForbidden)
 						return
+					}
+				}
+
+				if ep.Level == metadata.AuthUser {
+					if usID, _ := ctx2.Value(UsIDKey).(string); usID != "" {
+						if !IsUserMatchesTheID(r, usID) {
+							s.respondError(w, r, "You not permitted to use this userID", http.StatusForbidden)
+							return
+						}
 					}
 				}
 

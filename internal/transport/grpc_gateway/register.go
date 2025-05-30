@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	authpb "github.com/JunBSer/services_proto/auth/gen/go"
+	bookpb "github.com/JunBSer/services_proto/booking/gen/go"
 	hotelpb "github.com/JunBSer/services_proto/hotel/gen/go"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"go.uber.org/zap"
@@ -42,7 +43,17 @@ func (s *GatewayServer) registerServices(ctx context.Context, mux *runtime.Serve
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	//in future add registration of booking
+	bookingAddr := fmt.Sprintf("%s:%s", s.Config.BookingHost, s.Config.BookingPort)
+	err = RegisterBookingService(context.Background(), mux, bookingAddr)
+	if err != nil {
+		s.Logger.Error(
+			context.Background(),
+			"Error registering booking service",
+			zap.Error(err),
+			zap.String("caller", op),
+		)
+		return fmt.Errorf("%s: %w", op, err)
+	}
 
 	return nil
 }
@@ -65,11 +76,11 @@ func RegisterHotelService(ctx context.Context, mux *runtime.ServeMux, addr strin
 	return hotelpb.RegisterHotelServiceHandler(ctx, mux, conn)
 }
 
-//func RegisterBookingService(ctx context.Context, mux *runtime.ServeMux, addr string) error {
-//	conn, err := grpc.NewClient(addr)
-//
-//	if err != nil {
-//		return fmt.Errorf("failed to connect to booking service: %w", err)
-//	}
-//	return bookingpb.RegisterBookingHandler(ctx, mux, conn)
-//}
+func RegisterBookingService(ctx context.Context, mux *runtime.ServeMux, addr string) error {
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	if err != nil {
+		return fmt.Errorf("failed to connect to auth service: %w", err)
+	}
+	return bookpb.RegisterBookingServiceHandler(ctx, mux, conn)
+}
